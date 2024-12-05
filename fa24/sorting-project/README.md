@@ -1,4 +1,4 @@
-Current Highest Performance:
+Current Leader:
 
-TBA
+Group 1
 
