@@ -1,4 +1,4 @@
 Current Performance:
 
-See PDF
+For 2^8 : Runtime cycles = 107792 cycles
 
