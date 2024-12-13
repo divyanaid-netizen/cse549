@@ -1,12 +1,12 @@
-TILE_GROUP_DIM_X = 4 and TILE_GROUP_DIM_Y = 2
-|Sorting Size  |Cycle Count  |	Core Utilization  |	Total Instr Executed  | Vcache Utilization  | DRAM Utilization |
-|--------------|-------------|--------------------|-----------------------|---------------------|------------------|
-|2^7	       |100559 	     |7.35 %	          |59088	              |1.86 %	            |0.10 %            |
-|2^8	       |189285	     |6.16 %	          |93264  	              |1.74 %	            |0.11 %            |
-|2^9	       |367241	     |5.50 %	          |161616    	          |1.67 %	            |0.11 %            |
-|2^10	       |722785	     |5.16 %	          |298320	              |1.64 %	            |0.11 %            |
-|2^11	       |1433755	     |4.98 %	          |571728	              |1.62 %	            |0.11 %            |
-|2^12	       |2855110	     |4.90 %	          |1118544	              |1.62 %	            |0.11 %            |
-|2^13	       |5698866	     |4.85 %	          |2212176	              |1.78 %	            |0.12 %            |
-|2^14	       |11478110	 |4.74 %	          |4350160	              |1.57 %	            |0.14 %            |
-|2^16	       |17326288	 |3.25 %	          |17326288	              |1.08 %	            |3.10 %            |
+
+**Speedup over previous leader Geomean: 5,716,022/386,241 = 14.8X SpeedUp**
+<br/>
+**Geometric mean of the runtime: 386,241 Cycles**
+
+|Sorting Size  |Cycle Count |
+|--------------|------------|
+|2^12          |     182,325|
+|2^13          |     387,929|
+|2^14          |     814,660|
+
+NOTE: SpeedUp is calculated against previous leader's Geomean and not class median Geomean because not all groups have available data covering the valid test cases

@@ -4,10 +4,10 @@ HB_HAMMERBENCH_PATH = $(shell git rev-parse --show-toplevel)
 all: generate
 
 # call to generate a test name
-test-name = sort-radix-items_$(1)
+test-name = sort-items_$(1)
 
 # call to get parameter from test name
-get-buffer-size = $(lastword $(subst _, ,$(filter sort-radix-items_%,$(subst __, ,$(1)))))
+get-buffer-size = $(lastword $(subst _, ,$(filter sort-items_%,$(subst __, ,$(1)))))
 
 # defines tests
 TESTS =

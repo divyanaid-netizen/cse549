@@ -1,1 +1,1 @@
-APP_PATH = $(HB_HAMMERBENCH_PATH)/apps/sort_radix
+APP_PATH = $(HB_HAMMERBENCH_PATH)/apps/sort_bitonic

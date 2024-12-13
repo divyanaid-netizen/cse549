@@ -1,73 +1,70 @@
 #include <bsg_manycore.h>
 #include <bsg_cuda_lite_barrier.h>
 #include <math.h>
+#include "bsg_manycore_atomic.h"
+#include "bsg_cuda_lite_barrier.h"
+#include <atomic>
+#include <algorithm>
 
 typedef struct {
-    int key;
-    int value;
+    uint32_t key;
+    uint32_t value;
 } ValueIndex;
 
-#define min(a,b) \
-  ({ __typeof__ (a) _a = (a); \
-      __typeof__ (b) _b = (b); \
-    _a < _b ? _a : _b; })
+void bitonicSortStep(ValueIndex *data, int n, int j, int k) {
+    uint32_t elements_per_tile = n / (bsg_tiles_X * bsg_tiles_Y);
 
-void mergeSort(ValueIndex *arr, ValueIndex *temp, int block_offset, int step, int numElements) {
-  int left = block_offset + __bsg_id * step * 2;  // Start of left subarray
-  int right = left + step;                        // Start of right subarray
-  int end = min(left + step * 2, numElements);    // End of subarray region
+    for (uint32_t e = 0; e < elements_per_tile; ++e) {
+        uint32_t i = __bsg_id * elements_per_tile + e;
+        if (i >= n) return;
+        uint32_t ixj = i ^ j;
 
-  if (right >= numElements) return; // Nothing to merge if right subarray is out of bounds
+        if (ixj > i) {
+          if ((i & k) == 0) { // Sort ascending
+              if (data[i].value > data[ixj].value) {
+                  ValueIndex temp = data[i];
+                  data[i] = data[ixj];
+                  data[ixj] = temp;
+              }
+          } else { // Sort descending
+              if (data[i].value < data[ixj].value) {
+                  ValueIndex temp = data[i];
+                  data[i] = data[ixj];
+                  data[ixj] = temp;
+              }
+          }
+        }
+    }
+}
 
-  int i = left;    // Walking Pointer for left subarray
-  int j = right;   // Walking Pointer for right subarray
-  int k = left;    // Walking Pointer for temporary merge array
-
-  // Merge the two halves
-  while (i < right && j < end) {
-      if (arr[i].value <= arr[j].value) {
-          temp[k++] = arr[i++];
-      } else {
-          temp[k++] = arr[j++];
-      }
-  }
-  // Copy final elements from left half
-  while (i < right) {
-      temp[k++] = arr[i++];
-  }
-
-  // Copy final elements from right half
-  while (j < end) {
-      temp[k++] = arr[j++];
-  }
-
-  // Copy data back to the original array
-  for (int m = left; m < end; m++) {
-      arr[m] = temp[m];
-  }
+void warmup(ValueIndex *d_array, int size) {
+    int tid = __bsg_id;
+    int block_size = bsg_tiles_X * bsg_tiles_Y;
+    // Warm up the cache by accessing the elements
+    for (int i = tid; i < size; i += block_size) {
+        uint32_t value = d_array[i].value;
+        asm volatile ("" : : "r" (value) : "memory");
+    }
 }
 
 extern "C" __attribute__ ((noinline))
-int kernel_sort(ValueIndex * Unsorted, ValueIndex * Sorted, int N) {
-
+int kernel_sort_bitonic(ValueIndex *Unsorted, int N) {
   bsg_barrier_hw_tile_group_init();
+  // Cache warming before sorting
+  warmup(Unsorted, N);
   bsg_barrier_hw_tile_group_sync();
   bsg_cuda_print_stat_kernel_start();
-
-  for (int step = 1; step < N; step *= 2) {
-    int block_stride = (bsg_tiles_X * bsg_tiles_Y * step * 2);
-    int max_blocks = N / block_stride + ( N % block_stride != 0 );
-    for (int block_step = 0; block_step < max_blocks; block_step++) {
-      int block_offset = block_step * bsg_tiles_X * bsg_tiles_Y * step * 2;
-      mergeSort(Unsorted, Sorted, block_offset, step, N);
-      bsg_barrier_hw_tile_group_sync();
-    }
+  
+  for (int k = 2; k <= N; k <<= 1) {
+      for (int j = k >> 1; j > 0; j >>= 1) {
+          bitonicSortStep(Unsorted, N, j, k);
+          bsg_barrier_hw_tile_group_sync();
+      }
   }
 
   bsg_fence();
   bsg_cuda_print_stat_kernel_end();
   bsg_fence();
   bsg_barrier_hw_tile_group_sync();
-
   return 0;
 }

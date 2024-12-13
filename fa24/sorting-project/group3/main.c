@@ -37,7 +37,7 @@ void sort(int *vi_array, int n) {
 }
 
 
-int kernel_sort(int argc, char **argv) {
+int kernel_sort_bitonic(int argc, char **argv) {
 
   int rc;
   char *bin_path, *test_name;
@@ -47,7 +47,7 @@ int kernel_sort(int argc, char **argv) {
   bin_path = args.path;
   test_name = args.name;
 
-  bsg_pr_test_info("Running kernel_sort.\n");
+  bsg_pr_test_info("Running kernel_sort_bitonic.\n");
   srand(time);
  
   // Initialize Device.
@@ -95,10 +95,8 @@ int kernel_sort(int argc, char **argv) {
     printf("\n");
 
     // Allocate a block of memory in device.
-    eva_t Unsorted_device, Sorted_device;
+    eva_t Unsorted_device;
     BSG_CUDA_CALL(hb_mc_device_malloc(&device, SIZE * sizeof(ValueIndex), &Unsorted_device));
-    BSG_CUDA_CALL(hb_mc_device_malloc(&device, SIZE * sizeof(ValueIndex), &Sorted_device));
-
  
     // DMA Transfer to device.
     hb_mc_dma_htod_t htod_job [] = {
@@ -114,16 +112,16 @@ int kernel_sort(int argc, char **argv) {
     // CUDA arguments
     hb_mc_dimension_t tg_dim = { .x = bsg_tiles_X, .y = bsg_tiles_Y};
     hb_mc_dimension_t grid_dim = { .x = 1, .y = 1};
-    #define CUDA_ARGC 3
-    uint32_t cuda_argv[CUDA_ARGC] = {Unsorted_device, Sorted_device, SIZE};
+    #define CUDA_ARGC 2
+    uint32_t cuda_argv[CUDA_ARGC] = {Unsorted_device, SIZE};
     
     // Enqueue Kernel.
-    BSG_CUDA_CALL(hb_mc_kernel_enqueue (&device, grid_dim, tg_dim, "kernel_sort", CUDA_ARGC, cuda_argv));
+    BSG_CUDA_CALL(hb_mc_kernel_enqueue (&device, grid_dim, tg_dim, "kernel_sort_bitonic", CUDA_ARGC, cuda_argv));
     
     // Launch kernel.
-    hb_mc_manycore_trace_enable((&device)->mc);
+    //hb_mc_manycore_trace_enable((&device)->mc);
     BSG_CUDA_CALL(hb_mc_device_tile_groups_execute(&device));
-    hb_mc_manycore_trace_disable((&device)->mc);
+    //hb_mc_manycore_trace_disable((&device)->mc);
 
     // Copy result and validate.
     hb_mc_dma_dtoh_t dtoh_job [] = {
@@ -137,9 +135,9 @@ int kernel_sort(int argc, char **argv) {
     BSG_CUDA_CALL(hb_mc_device_dma_to_host(&device, &dtoh_job, 1));
 
     for (int i = 0; i < SIZE; i++) {
-      if (Sorted_expected_host[i].key != Sorted_host[i].key) {
-        printf("FAIL Sorted_host[%d] = %x\n", i, Sorted_host[i]);
-        printf("FAIL Sorted_expected_host[%d] = %x\n", i, Sorted_expected_host[i]);
+      if (Sorted_expected_host[i].value != Sorted_host[i].value) {
+        printf("FAIL Sorted_host[%d] = %x\n", i, Sorted_host[i].value);
+        printf("FAIL Sorted_expected_host[%d] = %x\n", i, Sorted_expected_host[i].value);
         printf("FAIL Sorted_host = %x\n", Sorted_host);
         for (int i = 0; i < SIZE; i++) {
           printf("%d ", Sorted_host[i].key);
@@ -166,6 +164,7 @@ int kernel_sort(int argc, char **argv) {
       }
     }
 
+    printf("PASSED GOLDEN TESTS");
 
     // Freeze tiles.
     BSG_CUDA_CALL(hb_mc_device_program_finish(&device));
@@ -176,4 +175,4 @@ int kernel_sort(int argc, char **argv) {
 }
 
 
-declare_program_main("sort", kernel_sort);
+declare_program_main("sort_bitonic", kernel_sort_bitonic);
