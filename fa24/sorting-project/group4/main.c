@@ -13,9 +13,8 @@
 #include <bsg_manycore_regression.h>
 
 #define ALLOCATOR_NAME "default_allocator"
-#ifndef ARRAY_SIZE
-#define ARRAY_SIZE 16384 // Default value
-#endif
+#undef ARRAY_SIZE               // Remove any previous definition of ARRAY_SIZE
+#define ARRAY_SIZE (1 << 14)    // Define array size as 2^20
 
 typedef struct {
     int id;
@@ -69,15 +68,15 @@ int execute_sort_kernel(int argc, char **argv) {
         sort_key_value_pairs(expected_output, ARRAY_SIZE);
 
         // Print input data
-        printf("Input values: ");
-        for (int i = 0; i < ARRAY_SIZE; i++) {
-            printf("%d ", input_array[i].data);
+        printf("Input Array: \n");
+        for (int i = 0; i < ARRAY_SIZE && i < 10; i++) { // Limit printing to first 10 elements
+            printf("%d %d\n", input_array[i].data, input_array[i].id);
         }
         printf("\n");
 
-        printf("Expected sorted IDs: ");
-        for (int i = 0; i < ARRAY_SIZE; i++) {
-            printf("%d ", expected_output[i].id);
+        printf("Expected sorted array: \n");
+        for (int i = 0; i < ARRAY_SIZE && i < 10; i++) { // Limit printing to first 10 elements
+            printf("%d %d\n", expected_output[i].data, expected_output[i].id);
         }
         printf("\n");
 
@@ -116,6 +115,12 @@ int execute_sort_kernel(int argc, char **argv) {
             }
         };
         BSG_CUDA_CALL(hb_mc_device_dma_to_host(&accelerator, dma_to_host, 1));
+
+        printf("Sorted Array: \n");
+        for (int i = 0; i < ARRAY_SIZE && i < 10; i++) { // Limit printing to first 10 elements
+            printf("%d %d\n", sorted_output[i].data, sorted_output[i].id);
+        }
+        printf("\n");
 
         // Validate results
         int is_valid = 1;

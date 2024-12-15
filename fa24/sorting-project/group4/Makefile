@@ -6,7 +6,7 @@ HB_HAMMERBENCH_PATH = $(shell git rev-parse --show-toplevel)
 all: generate
 
 # Call to generate a test name
-test-name = sort-item_$(1)
+test-name = sort-items_$(1)
 
 # Call to get the buffer size from the test name
 get-buffer-size = $(lastword $(subst _, ,$(filter sort-items%,$(subst __, ,$(1)))))
@@ -20,8 +20,8 @@ TESTS_DIRS = $(TESTS)
 $(addsuffix /parameters.mk, $(TESTS_DIRS)): %/parameters.mk:
 	@echo "Creating $@"
 	@mkdir -p $(dir $@)
-	@touch $@ 
-	@echo "test-name = $*" >> $@ 
+	@touch $@
+	@echo "test-name = $*" >> $@
 	@echo "buffer-size = $(call get-buffer-size, $*)" >> $@
 
 # Include common testbench definitions
@@ -35,4 +35,4 @@ CFLAGS += -DARRAY_SIZE=$(BUFFER_SIZE)
 
 # Clean rule
 clean:
-	rm -rf sort-item_*
+	rm -rf sort-items_*

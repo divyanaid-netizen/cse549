@@ -72,6 +72,7 @@ RISCV_CCPPFLAGS += -Dbsg_tiles_X=$(TILE_GROUP_DIM_X)
 RISCV_CCPPFLAGS += -Dbsg_tiles_Y=$(TILE_GROUP_DIM_Y)
 RISCV_CCPPFLAGS += -DCACHE_LINE_WORDS=$(BSG_MACHINE_VCACHE_LINE_WORDS)
 ifeq ($(warm-cache),yes)
+
 RISCV_CCPPFLAGS += -DWARM_CACHE
 endif
 RISCV_LDFLAGS += -flto
@@ -90,7 +91,7 @@ include $(EXAMPLES_PATH)/cuda/riscv.mk
 #
 # SIM_ARGS: Use this to pass arguments to the simulator
 ################################################################################
-C_ARGS ?= $(BSG_MANYCORE_KERNELS) quick_sort
+C_ARGS ?= $(BSG_MANYCORE_KERNELS) sortingnow
 
 SIM_ARGS ?=
 
